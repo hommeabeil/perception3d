@@ -219,6 +219,45 @@ pcl::PointCloud<pcl::VFHSignature308>::Ptr Object_recognition::calculateCVFHUS(p
 }
 
 
+void Object_recognition::testSGURFAlignement(pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_pointCloudIn)
+{
+    pcl::PointCloud<pcl::VFHSignature308>::Ptr signature_ptr(new pcl::PointCloud<pcl::VFHSignature308>);
+    pcl::PointCloud<pcl::Normal>::Ptr normal_ptr(new pcl::PointCloud<pcl::Normal>);
+    compute_normal(p_pointCloudIn, normal_ptr);
+
+    pcl::OURCVFHEstimation<PointT, pcl::Normal, pcl::VFHSignature308> ourCVFH;
+    pcl::search::KdTree<PointT>::Ptr kdtree (new pcl::search::KdTree<PointT>);
+    ourCVFH.setInputCloud(p_pointCloudIn);
+    ourCVFH.setInputNormals(normal_ptr);
+    ourCVFH.setSearchMethod(kdtree);
+    ourCVFH.setKSearch(10);
+    ourCVFH.setRadiusSearch(0);
+    //ourCVFH.setEPSAngleThreshold(5.0 / 180.0 * M_PI); // 5 degrees.
+    //ourCVFH.setCurvatureThreshold(1.0);
+    // ourcvfh.setClusterTolerance (0.015f); //1.5cm, three times the leaf size
+    ourCVFH.setNormalizeBins(false);
+    ourCVFH.setAxisRatio(0.98);
+
+    pcl::PointCloud<pcl::VFHSignature308>::Ptr returnCloud(new pcl::PointCloud<pcl::VFHSignature308>);
+    ourCVFH.compute(*returnCloud);
+
+    std::vector<Eigen::Matrix4f,Eigen::aligned_allocator<Eigen::Matrix4f> > tf;
+    ourCVFH.getTransforms(tf);
+
+    std::vector<pcl::PointIndices> indiceCluster;
+
+    ourCVFH.getClusterIndices(indiceCluster);
+
+    std::vector< Eigen::Vector3f > centroids;
+    std::vector< Eigen::Vector3f > normal_centroids;
+    ourCVFH.getCentroidClusters(centroids);
+    ourCVFH.getCentroidNormalClusters(normal_centroids);
+}
+
+
+
+
+
 int Object_recognition::object_recon(pcl::PointCloud<PointT>::Ptr p_ptr_cloud,
                                      pcl::PointCloud<pcl::VFHSignature308>::Ptr p_bd)
 {

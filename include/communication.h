@@ -55,6 +55,11 @@ private:
     void publishRelativePoseTF(tf::Transform relative_pose);
     bool m_publish_relative_pose;
 
+
+    void simpleVis (pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud);
+
+    boost::shared_ptr<pcl::visualization::PCLVisualizer> m_viewer;
+
 };
 
 #endif

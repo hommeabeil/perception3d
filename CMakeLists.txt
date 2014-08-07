@@ -126,3 +126,6 @@ target_link_libraries(arm_action_server ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
 add_executable( moveit_jaco_listener src/moveit_jaco_listener.cpp)
 target_link_libraries(moveit_jaco_listener ${catkin_LIBRARIES} ${PCL_LIBRARIES} lperception)
+
+add_executable( data_publisher_joint_test src/data_publisher_joint_test.cpp)
+target_link_libraries(data_publisher_joint_test ${catkin_LIBRARIES} ${PCL_LIBRARIES} lperception)

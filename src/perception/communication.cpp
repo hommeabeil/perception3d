@@ -8,6 +8,8 @@ Communication::Communication(ObjectExtractor *p_obj_e, FileAPI *p_api, JacoCusto
     m_coordinate_received = false;
     m_grasp_received = false;
     m_train_received = false;
+
+    m_viewer.reset(new pcl::visualization::PCLVisualizer("tempViewer"));
 }
 
 //-----------------------------------------------------------------------------------//
@@ -260,7 +262,7 @@ void Communication::testTFandSurfaceTransforms(){
     static tf::TransformBroadcaster br;
     tf::StampedTransform object_tf = m_object_ex_ptr->getCentroidPositionRGBFrame();
     br.sendTransform(object_tf);
-
+/*
     m_object_ex_ptr->m_transform_pc->clear();
     for(int i=0; i < tf_vector.size(); i++){
         Eigen::Matrix4f matrix = tf_vector.at(i);
@@ -277,8 +279,27 @@ void Communication::testTFandSurfaceTransforms(){
         m_object_ex_ptr->m_transform_pc->push_back(pt);
 
     }
-
+*/
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr output_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+    for(int i = 0; i < tf_vector.size(); i++)
+    {
+        pcl::transformPointCloud(*input_pointcloud, *output_cloud, tf_vector.at(i));
+    }
+    simpleVis(output_cloud);
 }
+
+
+void Communication::simpleVis (pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud)
+{
+    m_viewer->removeAllPointClouds();
+      //viewer->setBackgroundColor (0, 0, 0);
+    m_viewer->addPointCloud<pcl::PointXYZRGB> (cloud, "sample cloud");
+      //viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "sample cloud");
+      //viewer->addCoordinateSystem (1.0);
+      //viewer->initCameraParameters ();
+      //return (viewer);
+}
+
 
 
 tf::Transform Communication::tfFromEigen(Eigen::Matrix4f trans)

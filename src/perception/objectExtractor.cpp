@@ -363,18 +363,6 @@ void ObjectExtractor::paddingCorner(pcl::PointCloud<PointT>::Ptr p_memoryCloud_p
                                     pcl::PointCloud<PointT>::Ptr p_cloud_ptr,
                                     int p_distance)
 {
-    std::cout << "Memory point Cloud" << std::endl;
-    for(int i = 0; i < p_memoryCloud_ptr->size(); i++)
-    {
-        std::cout << p_memoryCloud_ptr->at(i) << std::endl;
-    }
-    std::cout << "Point Cloud" << std::endl;
-    for(int i = 0; i < p_cloud_ptr->size(); i++)
-    {
-        std::cout << p_cloud_ptr->at(i) << std::endl;
-    }
-
-
     for(int i = 0; i < p_cloud_ptr->size(); i += 4)
     {
         PointT topLeft = p_cloud_ptr->at(i);
