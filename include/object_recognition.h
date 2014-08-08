@@ -93,6 +93,10 @@ public:
                                                                pcl::PointCloud<pcl::Normal>::Ptr p_normal,
                                                                std::vector<Eigen::Matrix4f,Eigen::aligned_allocator<Eigen::Matrix4f> > &tf
                                                                );
+    pcl::PointCloud<pcl::VFHSignature308>::Ptr calculateCVFH(pcl::PointCloud<PointT>::Ptr p_cloud,
+                                                               pcl::PointCloud<pcl::Normal>::Ptr p_normal,
+                                                               std::vector<Eigen::Matrix4f,Eigen::aligned_allocator<Eigen::Matrix4f> > &tf,
+                                                               std::vector<Eigen::Vector3f> &p_centroid);
 
     void compute_normal(pcl::PointCloud<PointT>::Ptr p_cloud, pcl::PointCloud<pcl::Normal>::Ptr p_normal);
 
@@ -129,7 +133,11 @@ public:
                                                  pcl::PointCloud<pcl::VFHSignature308>::Ptr p_bd_cloud);
 
     pcl::PointCloud<pcl::VFHSignature308>::Ptr makeCVFH(pcl::PointCloud<PointT>::Ptr p_cloud);
-    pcl::PointCloud<pcl::VFHSignature308>::Ptr makeCVFH(pcl::PointCloud<PointT>::Ptr p_ptr_cloud, std::vector<Eigen::Matrix4f,Eigen::aligned_allocator<Eigen::Matrix4f> > &tf_);
+    pcl::PointCloud<pcl::VFHSignature308>::Ptr makeCVFH(pcl::PointCloud<PointT>::Ptr p_ptr_cloud,
+                                                        std::vector<Eigen::Matrix4f,Eigen::aligned_allocator<Eigen::Matrix4f> > &tf_);
+    pcl::PointCloud<pcl::VFHSignature308>::Ptr makeCVFH(pcl::PointCloud<PointT>::Ptr p_ptr_cloud,
+                                                        std::vector<Eigen::Matrix4f,Eigen::aligned_allocator<Eigen::Matrix4f> > &tf_,
+                                                        std::vector<Eigen::Vector3f>& p_centroid);
 
     int OURCVFHRecognition(pcl::PointCloud<PointT>::Ptr in_pc, FileAPI *fileAPI, Eigen::Matrix4f &trans);
     std::vector<double> OURCVFHRecognition(pcl::PointCloud<PointT>::Ptr in_pc, std::vector<pcl::PointCloud<PointT>::Ptr> hypotheses);
@@ -140,7 +148,8 @@ public:
 
     pcl::PointCloud<PointT>::Ptr transformAndVoxelizePointCloud(pcl::PointCloud<PointT>::Ptr in_source, pcl::PointCloud<PointT>::Ptr in_target, Eigen::Matrix4f in_transform);
 
-    void testSGURFAlignement(pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_pointCloudIn);
+    void testSGURFAlignement(pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_pointCloudIn,
+                             pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_cloudOut);
 
 
     double m_rmse_recognition_threshold;

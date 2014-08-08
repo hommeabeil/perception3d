@@ -157,6 +157,7 @@ pcl::PointCloud<pcl::VFHSignature308>::Ptr Object_recognition::calculateCVFHUS(p
                                                                                pcl::PointCloud<pcl::Normal>::Ptr p_normal,
                                                                                std::vector<Eigen::Matrix4f,Eigen::aligned_allocator<Eigen::Matrix4f> > &tf
                                                                                )
+
 {
     pcl::OURCVFHEstimation<PointT, pcl::Normal, pcl::VFHSignature308> ourCVFH;
     pcl::search::KdTree<PointT>::Ptr kdtree (new pcl::search::KdTree<PointT>);
@@ -218,8 +219,43 @@ pcl::PointCloud<pcl::VFHSignature308>::Ptr Object_recognition::calculateCVFHUS(p
     return returnCloud;
 }
 
+pcl::PointCloud<pcl::VFHSignature308>::Ptr Object_recognition::calculateCVFH(pcl::PointCloud<PointT>::Ptr p_cloud,
+                                                                              pcl::PointCloud<pcl::Normal>::Ptr p_normal,
+                                                                              std::vector<Eigen::Matrix4f,Eigen::aligned_allocator<Eigen::Matrix4f> > &tf,
+                                                                              std::vector<Eigen::Vector3f> &p_centroid)
+{
+    pcl::OURCVFHEstimation<PointT, pcl::Normal, pcl::VFHSignature308> ourCVFH;
+    pcl::search::KdTree<PointT>::Ptr kdtree (new pcl::search::KdTree<PointT>);
+    ourCVFH.setInputCloud(p_cloud);
+    ourCVFH.setInputNormals(p_normal);
+    ourCVFH.setSearchMethod(kdtree);
+    ourCVFH.setKSearch(10);
+    ourCVFH.setRadiusSearch(0);
+    //ourCVFH.setEPSAngleThreshold(5.0 / 180.0 * M_PI); // 5 degrees.
+    //ourCVFH.setCurvatureThreshold(1.0);
+    // ourcvfh.setClusterTolerance (0.015f); //1.5cm, three times the leaf size
+    ourCVFH.setNormalizeBins(false);
+    ourCVFH.setAxisRatio(0.98);
 
-void Object_recognition::testSGURFAlignement(pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_pointCloudIn)
+    pcl::PointCloud<pcl::VFHSignature308>::Ptr returnCloud(new pcl::PointCloud<pcl::VFHSignature308>);
+    ourCVFH.compute(*returnCloud);
+    ourCVFH.getTransforms(tf);
+
+
+    std::vector< Eigen::Vector3f > centroids;
+    std::vector< Eigen::Vector3f > normal_centroids;
+    ourCVFH.getCentroidClusters(p_centroid);
+    ourCVFH.getCentroidNormalClusters(normal_centroids);
+
+    std::cout << "CVFH size = " << returnCloud->size() << std::endl;
+
+    return returnCloud;
+
+}
+
+
+void Object_recognition::testSGURFAlignement(pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_pointCloudIn,
+                                             pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_cloudOut)
 {
     pcl::PointCloud<pcl::VFHSignature308>::Ptr signature_ptr(new pcl::PointCloud<pcl::VFHSignature308>);
     pcl::PointCloud<pcl::Normal>::Ptr normal_ptr(new pcl::PointCloud<pcl::Normal>);
@@ -252,6 +288,15 @@ void Object_recognition::testSGURFAlignement(pcl::PointCloud<pcl::PointXYZRGB>::
     std::vector< Eigen::Vector3f > normal_centroids;
     ourCVFH.getCentroidClusters(centroids);
     ourCVFH.getCentroidNormalClusters(normal_centroids);
+
+    if(indiceCluster.size() > 0)
+    {
+        pcl::ExtractIndices<PointT> extract;
+        extract.setInputCloud(p_pointCloudIn);
+        extract.setIndices(boost::shared_ptr<pcl::PointIndices>(new pcl::PointIndices(indiceCluster.at(0))));
+        extract.setNegative(false);
+        extract.filter(*p_cloudOut);
+    }
 }
 
 
@@ -760,6 +805,22 @@ pcl::PointCloud<pcl::VFHSignature308>::Ptr Object_recognition::makeCVFH(pcl::Poi
 
     pcl::PointCloud<pcl::VFHSignature308>::Ptr cloud_vfh_ptr (new pcl::PointCloud<pcl::VFHSignature308>);
     cloud_vfh_ptr = calculateCVFHUS(p_ptr_cloud, cloud_us_normal_ptr,tf_);
+
+    return cloud_vfh_ptr;
+
+}
+
+pcl::PointCloud<pcl::VFHSignature308>::Ptr Object_recognition::makeCVFH(pcl::PointCloud<PointT>::Ptr p_ptr_cloud,
+                                                                        std::vector<Eigen::Matrix4f,Eigen::aligned_allocator<Eigen::Matrix4f> > &tf_,
+                                                                        std::vector<Eigen::Vector3f>& p_centroid)
+{
+    pcl::PointCloud<PointT>::Ptr cloud_us_ptr(new pcl::PointCloud<PointT>);
+    //computeUniformSampling(p_ptr_cloud, cloud_us_ptr);
+    pcl::PointCloud<pcl::Normal>::Ptr cloud_us_normal_ptr (new pcl::PointCloud<pcl::Normal>);
+    compute_normal(p_ptr_cloud, cloud_us_normal_ptr);
+
+    pcl::PointCloud<pcl::VFHSignature308>::Ptr cloud_vfh_ptr (new pcl::PointCloud<pcl::VFHSignature308>);
+    cloud_vfh_ptr = calculateCVFH(p_ptr_cloud, cloud_us_normal_ptr,tf_, p_centroid);
 
     return cloud_vfh_ptr;
 

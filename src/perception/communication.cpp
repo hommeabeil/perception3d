@@ -256,19 +256,27 @@ void Communication::testTFandSurfaceTransforms(){
 
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr input_pointcloud = m_object_ex_ptr->getObjectToGrasp();
     std::vector<Eigen::Matrix4f,Eigen::aligned_allocator<Eigen::Matrix4f> > tf_vector;
-    pcl::PointCloud<pcl::VFHSignature308>::Ptr sig = m_object_ex_ptr->m_object_recognition.makeCVFH(input_pointcloud,tf_vector);
+    std::vector<Eigen::Vector3f> centroidVec;
+    pcl::PointCloud<pcl::VFHSignature308>::Ptr sig = m_object_ex_ptr->m_object_recognition.makeCVFH(input_pointcloud,tf_vector, centroidVec);
 
 
     static tf::TransformBroadcaster br;
     tf::StampedTransform object_tf = m_object_ex_ptr->getCentroidPositionRGBFrame();
     br.sendTransform(object_tf);
-/*
+
+    /*
+      To get the transfrom work we need to get the centroid directly from the ourcvfh algo.
+      I make a new function that take the centroid in parameters.
+      So this way we can set the orrigin of the tf
+      */
     m_object_ex_ptr->m_transform_pc->clear();
     for(int i=0; i < tf_vector.size(); i++){
         Eigen::Matrix4f matrix = tf_vector.at(i);
         tf::Transform tf_ = tfFromEigen(matrix);
         tf::Vector3 vec = tf_.getOrigin();
-        tf_.setOrigin(tf::Vector3(vec.getZ(),-vec.getX(),-vec.getY()));
+        tf::Vector3 vec2(centroidVec[i](2,0), -(centroidVec[i](0,0)), -(centroidVec[i](1,0)));
+        //tf_.setOrigin(tf::Vector3(vec.getZ(),-vec.getX(),-vec.getY()));
+        tf_.setOrigin(vec2);
         std::stringstream ss;
         ss << i;
         std::string str = "surfaceTransform_" + ss.str();
@@ -279,13 +287,7 @@ void Communication::testTFandSurfaceTransforms(){
         m_object_ex_ptr->m_transform_pc->push_back(pt);
 
     }
-*/
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr output_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
-    for(int i = 0; i < tf_vector.size(); i++)
-    {
-        pcl::transformPointCloud(*input_pointcloud, *output_cloud, tf_vector.at(i));
-    }
-    simpleVis(output_cloud);
+
 }
 
 
@@ -311,6 +313,8 @@ tf::Transform Communication::tfFromEigen(Eigen::Matrix4f trans)
     tf::transformEigenToTF(affine,transform_);
     tf::Quaternion test = transform_.getRotation().normalize();
     transform_.setRotation(test);
+
+
 
     return transform_;
 }
