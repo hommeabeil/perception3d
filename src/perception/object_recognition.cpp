@@ -246,6 +246,8 @@ pcl::PointCloud<pcl::VFHSignature308>::Ptr Object_recognition::calculateCVFH(pcl
     std::vector< Eigen::Vector3f > normal_centroids;
     ourCVFH.getCentroidClusters(p_centroid);
     ourCVFH.getCentroidNormalClusters(normal_centroids);
+    std::vector<pcl::PointIndices> indices;
+    ourCVFH.getClusterIndices(indices);
 
     std::cout << "CVFH size = " << returnCloud->size() << std::endl;
 

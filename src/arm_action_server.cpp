@@ -104,6 +104,7 @@ void callBackAngles(const control_msgs::FollowJointTrajectoryGoalConstPtr& p_inp
 
         ac.sendGoal(sendPosition);
         //debug
+
         std::cout << "Position1 == " << position[0] << std::endl;
         std::cout << "Position2 == " << position[1] << std::endl;
         std::cout << "Position3 == " << position[2] << std::endl;
