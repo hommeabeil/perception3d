@@ -62,7 +62,7 @@ int main(int argc, char** argv)
     for(int i = 0; i < pointVector.size(); i++)
     {
 
-        //ac.sendGoal(pointVector.at(i));
+        ac.sendGoal(pointVector.at(i));
         //debug
         std::cout << ros::Time::now() << std::endl;
         std::cout << "Position1 == " << pointVector.at(i).angles.joint1 << std::endl;
@@ -74,7 +74,7 @@ int main(int argc, char** argv)
         std::cout << "===============================" << std::endl;
         /////////////////////////////////////////////////////////////
 
-        //ac.waitForResult(ros::Duration(1.0));
+        ac.waitForResult(ros::Duration(1.0));
 
     }
     //control_msgs::FollowJointTrajectoryResult result;
