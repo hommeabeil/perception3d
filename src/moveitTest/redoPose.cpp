@@ -3,6 +3,9 @@
 #include<trajectory_msgs/JointTrajectoryPoint.h>
 #include<jaco_msgs/ArmJointAnglesAction.h>
 #include<control_msgs/FollowJointTrajectoryAction.h>
+#include <angles/angles.h>
+#include <jaco_driver/jaco_comm.h>
+#include <boost/thread/recursive_mutex.hpp>
 
 #include <fstream>
 
@@ -21,12 +24,12 @@ void parseTextFile(std::string p_path, std::vector<jaco_msgs::ArmJointAnglesGoal
             if(nbLine == 6)
             {
                 nbLine = 0;
-                goalTemp.angles.joint1 = position[0];
-                goalTemp.angles.joint2 = position[1];
-                goalTemp.angles.joint3 = position[2];
-                goalTemp.angles.joint4 = position[3];
-                goalTemp.angles.joint5 = position[4];
-                goalTemp.angles.joint6 = position[5];
+                goalTemp.angles.joint1 = angles::to_degrees(position[0]);
+                goalTemp.angles.joint2 = angles::to_degrees(position[1]);
+                goalTemp.angles.joint3 = angles::to_degrees(position[2]);
+                goalTemp.angles.joint4 = angles::to_degrees(position[3]);
+                goalTemp.angles.joint5 = angles::to_degrees(position[4]);
+                goalTemp.angles.joint6 = angles::to_degrees(position[5]);
                 position.clear();
                 p_vectorGoal.push_back(goalTemp);
             }
@@ -45,11 +48,12 @@ int main(int argc, char** argv)
     ros::init(argc, argv, "redo_pose_action");
 
     ros::NodeHandle nParam("~");
+    ros::NodeHandle nh;
 
     std::string logFile;
     nParam.param("log_file", logFile, std::string(""));
 
-    actionlib::SimpleActionClient<jaco_msgs::ArmJointAnglesAction> ac("/jaco_arm_driver/joint_angles/arm_joint_angles", true);
+    actionlib::SimpleActionClient<jaco_msgs::ArmJointAnglesAction> ac("/jaco_arm_driver/joint_angles/joint_angles", true);
 
     //std::vector<trajectory_msgs::JointTrajectoryPoint> pointVector(p_input->trajectory.points);
 
@@ -61,7 +65,7 @@ int main(int argc, char** argv)
 
     for(int i = 0; i < pointVector.size(); i++)
     {
-
+/*
         ac.sendGoal(pointVector.at(i));
         //debug
         std::cout << ros::Time::now() << std::endl;
@@ -75,7 +79,18 @@ int main(int argc, char** argv)
         /////////////////////////////////////////////////////////////
 
         ac.waitForResult(ros::Duration(1.0));
+*/
 
+        boost::recursive_mutex mx;
+        jaco::JacoComm com(nh, mx, false);
+        jaco::JacoAngles angles;
+        angles.Actuator1 = 7;
+        angles.Actuator2 = -1.73;
+        angles.Actuator3 = 0.701;
+        angles.Actuator4 = -0.81;
+        angles.Actuator5 = 1.51;
+        angles.Actuator6 = 3.136;
+        com.setJointAngles(angles, 1);
     }
     //control_msgs::FollowJointTrajectoryResult result;
     //p_server->setSucceeded(result);

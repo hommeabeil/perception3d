@@ -7,6 +7,7 @@
 #include <jaco_msgs/ArmJointAnglesAction.h>
 #include <trajectory_msgs/JointTrajectoryPoint.h>
 #include <actionlib/client/simple_action_client.h>
+#include <angles/angles.h>
 
 
 ros::Publisher pub;
@@ -124,7 +125,7 @@ void callBackVelocity(const control_msgs::FollowJointTrajectoryGoalConstPtr& p_i
 void callBackAngles(const control_msgs::FollowJointTrajectoryGoalConstPtr& p_input, actionlib::SimpleActionServer<control_msgs::FollowJointTrajectoryAction>* p_server)
 {
 
-    actionlib::SimpleActionClient<jaco_msgs::ArmJointAnglesAction> ac("/jaco_arm_driver/joint_angles/arm_joint_angles", true);
+    actionlib::SimpleActionClient<jaco_msgs::ArmJointAnglesAction> ac("/jaco_arm_driver/joint_angles/joint_angles", true);
 
     std::vector<trajectory_msgs::JointTrajectoryPoint> pointVector(p_input->trajectory.points);
 
@@ -134,12 +135,12 @@ void callBackAngles(const control_msgs::FollowJointTrajectoryGoalConstPtr& p_inp
 
         jaco_msgs::ArmJointAnglesGoal sendPosition;
 
-        sendPosition.angles.joint1 = position[0];
-        sendPosition.angles.joint2 = position[1];
-        sendPosition.angles.joint3 = position[2];
-        sendPosition.angles.joint4 = position[3];
-        sendPosition.angles.joint5 = position[4];
-        sendPosition.angles.joint6 = position[5];
+        sendPosition.angles.joint1 = angles::to_degrees(position[0]);
+        sendPosition.angles.joint2 = angles::to_degrees(position[1]);
+        sendPosition.angles.joint3 = angles::to_degrees(position[2]);
+        sendPosition.angles.joint4 = angles::to_degrees(position[3]);
+        sendPosition.angles.joint5 = angles::to_degrees(position[4]);
+        sendPosition.angles.joint6 = angles::to_degrees(position[5]);
 
         ac.sendGoal(sendPosition);
         //debug

@@ -131,4 +131,4 @@ add_executable( data_publisher_joint_test src/data_publisher_joint_test.cpp)
 target_link_libraries(data_publisher_joint_test ${catkin_LIBRARIES} ${PCL_LIBRARIES} lperception)
 
 add_executable(redoPose src/moveitTest/redoPose.cpp)
-target_link_libraries(redoPose ${catkin_LIBRARIES} ${PCL_LIBRARIES} lperception)
+target_link_libraries(redoPose ${catkin_LIBRARIES} ${PCL_LIBRARIES} lperception ljacoDriver)

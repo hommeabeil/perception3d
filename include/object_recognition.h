@@ -97,6 +97,11 @@ public:
                                                                pcl::PointCloud<pcl::Normal>::Ptr p_normal,
                                                                std::vector<Eigen::Matrix4f,Eigen::aligned_allocator<Eigen::Matrix4f> > &tf,
                                                                std::vector<Eigen::Vector3f> &p_centroid);
+    pcl::PointCloud<pcl::VFHSignature308>::Ptr calculateCVFH(pcl::PointCloud<PointT>::Ptr p_cloud,
+                                                               pcl::PointCloud<pcl::Normal>::Ptr p_normal,
+                                                               std::vector<Eigen::Matrix4f,Eigen::aligned_allocator<Eigen::Matrix4f> > &tf,
+                                                               std::vector<Eigen::Vector3f> &p_centroid,
+                                                               std::vector<pcl::PointIndices>& p_indices);
 
     void compute_normal(pcl::PointCloud<PointT>::Ptr p_cloud, pcl::PointCloud<pcl::Normal>::Ptr p_normal);
 
@@ -138,9 +143,21 @@ public:
     pcl::PointCloud<pcl::VFHSignature308>::Ptr makeCVFH(pcl::PointCloud<PointT>::Ptr p_ptr_cloud,
                                                         std::vector<Eigen::Matrix4f,Eigen::aligned_allocator<Eigen::Matrix4f> > &tf_,
                                                         std::vector<Eigen::Vector3f>& p_centroid);
+    pcl::PointCloud<pcl::VFHSignature308>::Ptr makeCVFH(pcl::PointCloud<PointT>::Ptr p_ptr_cloud,
+                                                        std::vector<Eigen::Matrix4f,Eigen::aligned_allocator<Eigen::Matrix4f> > &tf_,
+                                                        std::vector<Eigen::Vector3f>& p_centroid,
+                                                        std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>& p_surface);
+
+    void pointCloudExtractor(pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_cloud,
+                             pcl::PointIndices p_indices,
+                             pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_cloudOut);
 
     int OURCVFHRecognition(pcl::PointCloud<PointT>::Ptr in_pc, FileAPI *fileAPI, Eigen::Matrix4f &trans);
     std::vector<double> OURCVFHRecognition(pcl::PointCloud<PointT>::Ptr in_pc, std::vector<pcl::PointCloud<PointT>::Ptr> hypotheses);
+    std::vector<double> OURCVFHRecognitionSGURF(pcl::PointCloud<PointT>::Ptr p_cloudIn,
+                                                std::vector<pcl::PointCloud<PointT>::Ptr> p_hypotheses,
+                                                std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> > p_tf);
+    int OURCVFHRecognitionSgurf(pcl::PointCloud<PointT>::Ptr in_pc, FileAPI *fileAPI, Eigen::Matrix4f &trans);
 
     std::vector<std::vector<int> > getNNSurfaces(pcl::PointCloud<pcl::VFHSignature308>::Ptr p_cloud,
                                                                      pcl::PointCloud<pcl::VFHSignature308>::Ptr p_bd_cloud,

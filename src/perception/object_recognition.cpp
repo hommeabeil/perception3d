@@ -255,6 +255,57 @@ pcl::PointCloud<pcl::VFHSignature308>::Ptr Object_recognition::calculateCVFH(pcl
 
 }
 
+pcl::PointCloud<pcl::VFHSignature308>::Ptr Object_recognition::calculateCVFH(pcl::PointCloud<PointT>::Ptr p_cloud,
+                                                                              pcl::PointCloud<pcl::Normal>::Ptr p_normal,
+                                                                              std::vector<Eigen::Matrix4f,Eigen::aligned_allocator<Eigen::Matrix4f> > &tf,
+                                                                              std::vector<Eigen::Vector3f> &p_centroid,
+                                                                              std::vector<pcl::PointIndices>& p_indice)
+{
+    pcl::OURCVFHEstimation<PointT, pcl::Normal, pcl::VFHSignature308> ourCVFH;
+    pcl::search::KdTree<PointT>::Ptr kdtree (new pcl::search::KdTree<PointT>);
+    ourCVFH.setInputCloud(p_cloud);
+    ourCVFH.setInputNormals(p_normal);
+    ourCVFH.setSearchMethod(kdtree);
+    ourCVFH.setKSearch(10);
+    ourCVFH.setRadiusSearch(0);
+    //ourCVFH.setEPSAngleThreshold(5.0 / 180.0 * M_PI); // 5 degrees.
+    //ourCVFH.setCurvatureThreshold(1.0);
+    // ourcvfh.setClusterTolerance (0.015f); //1.5cm, three times the leaf size
+    ourCVFH.setNormalizeBins(false);
+    ourCVFH.setAxisRatio(0.98);
+
+    pcl::PointCloud<pcl::VFHSignature308>::Ptr returnCloud(new pcl::PointCloud<pcl::VFHSignature308>);
+    ourCVFH.compute(*returnCloud);
+    ourCVFH.getTransforms(tf);
+
+
+    std::vector< Eigen::Vector3f > centroids;
+    std::vector< Eigen::Vector3f > normal_centroids;
+    ourCVFH.getCentroidClusters(p_centroid);
+    ourCVFH.getCentroidNormalClusters(normal_centroids);
+    std::vector<pcl::PointIndices> indices;
+    ourCVFH.getClusterIndices(p_indice);
+
+    std::cout << "CVFH size = " << returnCloud->size() << std::endl;
+
+    return returnCloud;
+
+}
+
+void Object_recognition::pointCloudExtractor(pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_cloud,
+                         pcl::PointIndices p_indices,
+                         pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_cloudOut)
+{
+    pcl::PointIndicesPtr indicePtr;
+    *indicePtr = p_indices;
+    pcl::ExtractIndices<pcl::PointXYZRGB> extract;
+    extract.setInputCloud(p_cloud);
+    extract.setIndices(indicePtr);
+    extract.setNegative(false);
+    extract.filter(*p_cloudOut);
+}
+
+
 
 void Object_recognition::testSGURFAlignement(pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_pointCloudIn,
                                              pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_cloudOut)
@@ -654,6 +705,144 @@ std::vector<double> Object_recognition::OURCVFHRecognition(pcl::PointCloud<Point
 
 }
 
+std::vector<double> Object_recognition::OURCVFHRecognitionSGURF(pcl::PointCloud<PointT>::Ptr p_cloudIn,
+                                            std::vector<pcl::PointCloud<PointT>::Ptr> p_hypotheses,
+                                            std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> > p_tf)
+{
+    std::cout << "There are " << p_hypotheses.size() << " hypotheses to check for recognition" << std::endl;
+
+    std::vector<double> whole_PC_scores;
+    std::vector<double> whole_PC_times;
+    std::vector<Eigen::Matrix4f> whole_PC_transforms;
+
+    std::vector<double> sampled_PC_scores;
+    std::vector<double> sampled_PC_times;
+    std::vector<Eigen::Matrix4f> sampled_PC_transforms;
+
+    //Sample Pointclouds
+    pcl::PointCloud<PointT>::Ptr in_pc_sampled(new pcl::PointCloud<PointT>);
+    computeUniformSampling(p_cloudIn,in_pc_sampled);
+
+    // Loop over object hypotheses
+    for(int i=0; i < p_hypotheses.size(); i++){
+        std::cout << "Looking at object #" << i << std::endl;
+        pcl::PointCloud<PointT>::Ptr obj = p_hypotheses.at(i);
+        pcl::PointCloud<PointT>::Ptr obj_sampled(new pcl::PointCloud<PointT>);
+        computeUniformSampling(obj,obj_sampled);
+
+        double smallestScore_fine = 99999;
+        Eigen::Matrix4f smallestTransform_fine;
+        double smallestScore_coarse = 99999;
+        Eigen::Matrix4f smallestTransform_coarse;
+
+        double avgTime_fine = 0;
+        double avgTime_coarse = 0;
+        int loopIteration = 0;
+
+        // Loop for different initial transforms (only yaw angle)
+        for(int i = 0; i < obj->size(); i++){
+/*
+            Eigen::Matrix4f objTransform = obj->at(i);
+            for(int j = 0; i < surface_transforms.size(); j++)
+            {
+                Eigen::Matrix4f transformLocal = surface_transforms.at(i);
+                Eigen::Matrix4f initialTransform = transformLocal.inverse() * objTransform;
+                double time_fine   = 0;
+                double time_coarse = 0;
+
+                double score_fine   = mergePointCVFH(in_pc,obj.getPointCloud(),initialTransform,time_fine);
+                double score_coarse = mergePointCVFH(in_pc_sampled,obj_sampled,initialTransform,time_coarse);
+
+                avgTime_fine   += time_fine;
+                avgTime_coarse += time_coarse;
+                loopIteration++;
+
+                if(score_fine < smallestScore_fine){
+                    smallestScore_fine = score_fine;
+                }
+
+                if(score_coarse < smallestScore_coarse){
+                    smallestScore_coarse = score_coarse;
+                }
+            }
+            */
+        }
+
+        //avgTime_fine   = avgTime_fine   / loopIteration;
+        //avgTime_coarse = avgTime_coarse / loopIteration;
+
+        std::cout << "It took " << avgTime_coarse << " seconds to do ICP with sampled pointclouds of this object" << std::endl;
+        std::cout << "It took " << avgTime_fine   << " seconds to do ICP with full pointclouds of this object"    << std::endl;
+
+        whole_PC_times.push_back(avgTime_fine);
+        whole_PC_scores.push_back(smallestScore_fine);
+        whole_PC_transforms.push_back(smallestTransform_fine);
+
+        sampled_PC_times.push_back(avgTime_coarse);
+        sampled_PC_scores.push_back(smallestScore_coarse);
+        sampled_PC_transforms.push_back(smallestTransform_coarse);
+
+    }
+
+    // Retrieve the object with the best score (Object is recognized)
+    double fine_time_avg = std::accumulate(whole_PC_times.begin(),whole_PC_times.end(),0);
+    //fine_time_avg = fine_time_avg / whole_PC_times.size();
+
+    double coarse_time_avg = std::accumulate(sampled_PC_times.begin(),sampled_PC_times.end(),0);
+    //coarse_time_avg = coarse_time_avg / sampled_PC_times.size();
+
+
+    int    fine_smallest_distance_index   = -1;
+    int    coarse_smallest_distance_index = -1;
+    double fine_smallest_distance         = 99999.0;
+    double coarse_smallest_distance       = 99999.0;
+
+    for(int i=0; i < sampled_PC_scores.size(); i++){
+        double fine_distance = whole_PC_scores.at(i);
+        if(fine_distance < fine_smallest_distance){
+            fine_smallest_distance = fine_distance;
+            fine_smallest_distance_index = i;
+            //trans = whole_PC_transforms.at(i);
+        }
+
+        double coarse_distance = sampled_PC_scores.at(i);
+        if(coarse_distance < coarse_smallest_distance){
+            coarse_smallest_distance = coarse_distance;
+            coarse_smallest_distance_index = i;
+        }
+    }
+
+    //std::cout << "Object # retrieved with ICP on WHOLE Pointcloud : "   << fine_smallest_distance_index << std::endl;
+    //std::cout << "Object # retrieved with ICP on SAMPLED Pointcloud : " << coarse_smallest_distance     << std::endl;
+
+
+    std::vector<double> returnVector;
+
+
+    if(fine_smallest_distance < m_rmse_recognition_threshold){
+        returnVector.push_back(fine_smallest_distance_index);
+    }
+
+    else{
+        returnVector.push_back(-1.0);
+    }
+
+    if(coarse_smallest_distance < m_rmse_recognition_threshold){
+        returnVector.push_back(coarse_smallest_distance);
+    }
+
+    else{
+        returnVector.push_back(-1.0);
+    }
+
+    returnVector.push_back(fine_time_avg);
+    returnVector.push_back(coarse_time_avg);
+
+    return returnVector;
+
+
+}
+
 
 
 
@@ -825,7 +1014,30 @@ pcl::PointCloud<pcl::VFHSignature308>::Ptr Object_recognition::makeCVFH(pcl::Poi
     cloud_vfh_ptr = calculateCVFH(p_ptr_cloud, cloud_us_normal_ptr,tf_, p_centroid);
 
     return cloud_vfh_ptr;
+}
 
+pcl::PointCloud<pcl::VFHSignature308>::Ptr Object_recognition::makeCVFH(pcl::PointCloud<PointT>::Ptr p_ptr_cloud,
+                                                                        std::vector<Eigen::Matrix4f,Eigen::aligned_allocator<Eigen::Matrix4f> > &tf_,
+                                                                        std::vector<Eigen::Vector3f>& p_centroid,
+                                                                        std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>& p_surface)
+{
+    pcl::PointCloud<PointT>::Ptr cloud_us_ptr(new pcl::PointCloud<PointT>);
+    //computeUniformSampling(p_ptr_cloud, cloud_us_ptr);
+    pcl::PointCloud<pcl::Normal>::Ptr cloud_us_normal_ptr (new pcl::PointCloud<pcl::Normal>);
+    compute_normal(p_ptr_cloud, cloud_us_normal_ptr);
+
+    pcl::PointCloud<pcl::VFHSignature308>::Ptr cloud_vfh_ptr (new pcl::PointCloud<pcl::VFHSignature308>);
+    std::vector<pcl::PointIndices> pointIndice_vec;
+    cloud_vfh_ptr = calculateCVFH(p_ptr_cloud, cloud_us_normal_ptr,tf_, p_centroid, pointIndice_vec);
+
+    for(int i = 0; i < pointIndice_vec.size(); i++)
+    {
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointSurface(new pcl::PointCloud<pcl::PointXYZRGB>);
+        pointCloudExtractor(p_ptr_cloud, pointIndice_vec.at(i), pointSurface);
+        p_surface.push_back(pointSurface);
+    }
+
+    return cloud_vfh_ptr;
 }
 
 
@@ -860,6 +1072,139 @@ pcl::PointCloud<PointT>::Ptr Object_recognition::transformAndVoxelizePointCloud(
 
     return cloud_filtered;
 }
+
+
+int Object_recognition::OURCVFHRecognitionSgurf(pcl::PointCloud<PointT>::Ptr in_pc, FileAPI *fileAPI, Eigen::Matrix4f &trans)
+{
+    // Calculate the surface histograms for the input pointcloud
+    std::vector<Eigen::Matrix4f,Eigen::aligned_allocator<Eigen::Matrix4f> > surface_transforms;
+    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> surfaceVec;
+    std::vector<Eigen::Vector3f> centroidVec;
+    pcl::PointCloud<pcl::VFHSignature308>::Ptr surface_histograms = makeCVFH(in_pc,surface_transforms,centroidVec,surfaceVec);
+
+
+    // Get a certain number of the NN surface hypotheses from the object database
+    pcl::PointCloud<pcl::VFHSignature308>::Ptr signature_database = fileAPI->getAllHistograms();
+    std::vector<std::vector<int> > NN_object_indices = getNNSurfaces(surface_histograms,signature_database,5);
+
+    // Get object hypotheses and initial transforms
+
+    std::vector<ObjectBd> object_hypotheses = fileAPI->retrieveObjectFromHistogram( NN_object_indices.at(1) );
+
+
+
+    std::vector<double> whole_PC_scores;
+    std::vector<double> whole_PC_times;
+    std::vector<Eigen::Matrix4f> whole_PC_transforms;
+
+    std::vector<double> sampled_PC_scores;
+    std::vector<double> sampled_PC_times;
+    std::vector<Eigen::Matrix4f> sampled_PC_transforms;
+
+    //Sample Pointclouds
+    pcl::PointCloud<PointT>::Ptr in_pc_sampled(new pcl::PointCloud<PointT>);
+    computeUniformSampling(in_pc,in_pc_sampled);
+
+    // Loop over object hypotheses
+    for(int i=0; i < object_hypotheses.size(); i++)
+    {
+        ObjectBd obj = object_hypotheses.at(i);
+        pcl::PointCloud<PointT>::Ptr obj_sampled(new pcl::PointCloud<PointT>);
+        computeUniformSampling(obj.getPointCloud(),obj_sampled);
+
+        double smallestScore_fine = 99999;
+        Eigen::Matrix4f smallestTransform_fine;
+        double smallestScore_coarse = 99999;
+        Eigen::Matrix4f smallestTransform_coarse;
+
+        double avgTime_fine = 0;
+        double avgTime_coarse = 0;
+        int loopIteration = 0;
+
+        // Loop for different initial transforms (only yaw angle)
+        for(int i = 0; i < obj.getTransforms().size(); i++){
+
+            Eigen::Matrix4f objTransform = obj.getTransforms().at(i);
+            for(int j = 0; i < surface_transforms.size(); j++)
+            {
+                Eigen::Matrix4f transformLocal = surface_transforms.at(i);
+                Eigen::Matrix4f initialTransform = transformLocal.inverse() * objTransform;
+                double time_fine   = 0;
+                double time_coarse = 0;
+
+                double score_fine   = mergePointCVFH(in_pc,obj.getPointCloud(),initialTransform,time_fine);
+                double score_coarse = mergePointCVFH(in_pc_sampled,obj_sampled,initialTransform,time_coarse);
+
+                avgTime_fine   += time_fine;
+                avgTime_coarse += time_coarse;
+                loopIteration++;
+
+                if(score_fine < smallestScore_fine){
+                    smallestScore_fine = score_fine;
+                }
+
+                if(score_coarse < smallestScore_coarse){
+                    smallestScore_coarse = score_coarse;
+                }
+            }
+        }
+
+        //avgTime_fine   = avgTime_fine   / loopIteration;
+        //avgTime_coarse = avgTime_coarse / loopIteration;
+
+        whole_PC_times.push_back(avgTime_fine);
+        whole_PC_scores.push_back(smallestScore_fine);
+        whole_PC_transforms.push_back(smallestTransform_fine);
+
+        sampled_PC_times.push_back(avgTime_coarse);
+        sampled_PC_scores.push_back(smallestScore_coarse);
+        sampled_PC_transforms.push_back(smallestTransform_coarse);
+
+    }
+
+    // Retrieve the object with the best score (Object is recognized)
+    double fine_time_avg   = std::accumulate(whole_PC_times.begin(),whole_PC_times.end(),0);
+    //fine_time_avg = fine_time_avg / whole_PC_times.size();
+
+    double coarse_time_avg = std::accumulate(sampled_PC_times.begin(),sampled_PC_times.end(),0);
+    //coarse_time_avg = coarse_time_avg / sampled_PC_times.size();
+
+
+    int    fine_smallest_distance_index   = -1;
+    int    coarse_smallest_distance_index = -1;
+    double fine_smallest_distance         = 99999.0;
+    double coarse_smallest_distance       = 99999.0;
+
+    for(int i=0; i < sampled_PC_scores.size(); i++){
+        double fine_distance = whole_PC_scores.at(i);
+        if(fine_distance < fine_smallest_distance){
+            fine_smallest_distance = fine_distance;
+            fine_smallest_distance_index = i;
+            trans = whole_PC_transforms.at(i);
+        }
+
+        double coarse_distance = sampled_PC_scores.at(i);
+        if(coarse_distance < coarse_smallest_distance){
+            coarse_smallest_distance = coarse_distance;
+            coarse_smallest_distance_index = i;
+        }
+    }
+
+    std::cout << "Object # retrieved with ICP on WHOLE Pointcloud : "   << fine_smallest_distance_index << std::endl;
+    std::cout << "Object # retrieved with ICP on SAMPLED Pointcloud : " << coarse_smallest_distance     << std::endl;
+
+    if(fine_smallest_distance < m_rmse_recognition_threshold){
+        return NN_object_indices.at(1).at(fine_smallest_distance_index);
+    }
+
+    else{
+        return -1;
+    }
+}
+
+
+
+
 
 //Eigen::Matrix4f Object_recognition::mergePointClouds(   pcl::PointCloud<pcl::FPFHSignature33>::Ptr f_src,
 //                                                        pcl::PointCloud<pcl::FPFHSignature33>::Ptr f_target,
