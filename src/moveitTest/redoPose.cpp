@@ -80,9 +80,9 @@ int main(int argc, char** argv)
 
         ac.waitForResult(ros::Duration(1.0));
 */
-
+    }/*
         boost::recursive_mutex mx;
-        jaco::JacoComm com(nh, mx, false);
+        jaco::JacoComm com(nParam, mx, false);
         jaco::JacoAngles angles;
         angles.Actuator1 = 7;
         angles.Actuator2 = -1.73;
@@ -91,7 +91,8 @@ int main(int argc, char** argv)
         angles.Actuator5 = 1.51;
         angles.Actuator6 = 3.136;
         com.setJointAngles(angles, 1);
-    }
+        */
+
     //control_msgs::FollowJointTrajectoryResult result;
     //p_server->setSucceeded(result);
 
