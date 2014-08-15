@@ -122,10 +122,10 @@ add_dependencies(testMoveit perception3d_gencpp)
 add_executable(terminalListener src/moveitTest/terminalListener.cpp)
 target_link_libraries(terminalListener ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
-add_executable(arm_action_server src/arm_action_server.cpp)
+add_executable(arm_action_server src/moveitPlugin/arm_action_server.cpp)
 target_link_libraries(arm_action_server ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
-add_executable( moveit_jaco_listener src/moveit_jaco_listener.cpp)
+add_executable( moveit_jaco_listener src/moveitPlugin/moveit_jaco_listener.cpp)
 target_link_libraries(moveit_jaco_listener ${catkin_LIBRARIES} ${PCL_LIBRARIES} lperception)
 
 add_executable( data_publisher_joint_test src/data_publisher_joint_test.cpp)

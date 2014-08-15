@@ -1,6 +1,19 @@
 #include <ros/ros.h>
 #include <jaco_msgs/JointVelocity.h>
 
+/*
+  This is a script to test the joint velocity.  You can choose how many velocity you want to send.
+  It will send it for 2 sec.  The script will first send 0 and will finish with 0.  You can send only
+  to 1 joint during the entire process.
+
+  To launch it, you will need to use the launch file data_publisher_joint_test.launch.
+  In there you can specify the joint you want to move.
+  Param = joint_name.  range value = [1,6].
+
+  The velocity is specify with the other param.
+  Param = joint_velocity_number#  # = [0,1,2,3,4,...]  The value represent the velocity you want
+  to set the joint to (deg/s).  The 0 deg/s at the begining and at the end is by default set.
+  */
 
 
 int main(int argc, char** argv)

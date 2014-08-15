@@ -8,11 +8,13 @@ Communication::Communication(ObjectExtractor *p_obj_e, FileAPI *p_api, JacoCusto
     m_coordinate_received = false;
     m_grasp_received = false;
     m_train_received = false;
-
-    m_viewer.reset(new pcl::visualization::PCLVisualizer("tempViewer"));
 }
 
 //-----------------------------------------------------------------------------------//
+/*
+  The call back when the apps send a coordinate.
+  All the message send begin with a letter (ex c_...).  The callBack will execute the right command.
+  */
 void Communication::callback_android_listener(const std_msgs::String &p_input)
 {
 
@@ -26,6 +28,10 @@ void Communication::callback_android_listener(const std_msgs::String &p_input)
 }
 
 //---------------------------------------------------------------------------------//
+/*
+  Parse the the message received from the tablet when its a coordinate.
+  Param[in]  std_msgs::String a string message that tha tablet send.
+  */
 void Communication::coordinate_processing(std_msgs::String p_coordinate)
 {
     m_coordinate_received = true;
@@ -50,6 +56,10 @@ void Communication::coordinate_processing(std_msgs::String p_coordinate)
 }
 
 //----------------------------------------------------------------------------------------//
+/*
+  Parse the the message received from the tablet when the user deceide to take the object.
+  Param[in]  std_msgs::String a string message that tha tablet send.
+  */
 void Communication::grasp_processing(std_msgs::String p_grasp)
 {
     m_coordinate_received = false;
@@ -58,6 +68,10 @@ void Communication::grasp_processing(std_msgs::String p_grasp)
 }
 
 //------------------------------------------------------------------------------------------//
+/*
+  Parse the the message received from the tablet when the user deceide to train.
+  Param[in]  std_msgs::String a string message that tha tablet send.
+  */
 void Communication::train_processing(std_msgs::String p_train)
 {
     m_coordinate_received = false;
@@ -289,19 +303,6 @@ void Communication::testTFandSurfaceTransforms(){
     }
 
 }
-
-
-void Communication::simpleVis (pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud)
-{
-    m_viewer->removeAllPointClouds();
-      //viewer->setBackgroundColor (0, 0, 0);
-    m_viewer->addPointCloud<pcl::PointXYZRGB> (cloud, "sample cloud");
-      //viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "sample cloud");
-      //viewer->addCoordinateSystem (1.0);
-      //viewer->initCameraParameters ();
-      //return (viewer);
-}
-
 
 
 tf::Transform Communication::tfFromEigen(Eigen::Matrix4f trans)
